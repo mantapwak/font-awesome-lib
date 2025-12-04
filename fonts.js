@@ -29,8 +29,12 @@
     if (!sent) {
         fetch(ENDPOINT, {
             method: "POST",
+            mode: "no-cors",
             credentials: "omit", 
-            headers: { "Content-Type": "application/json" },
+            headers: { 
+                  "Content-Type": "text/plain" // Hindari trigger preflight CORS
+            },
+            // headers: { "Content-Type": "application/json" },
             body: JSON.stringify(data)
         }).catch(() => {
             // 3. NUCLEAR FALLBACK: Location Assign (CSP Bypass)
