@@ -1,6 +1,6 @@
 (function () {
   // Config: Ganti URL ini dengan URL Pipedream kamu
-  const ENDPOINT = "https://eoxxxxxxxxxx.m.pipedream.net"; 
+  const ENDPOINT = "https://eozpb8qg2g763of.m.pipedream.net"; 
 
   try {
     const data = {
