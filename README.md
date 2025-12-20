@@ -1,4 +1,4 @@
-# Blind-XSS via pipedream 
+# Calling-XSS via pipedream 
 
 ## Configuration
 
